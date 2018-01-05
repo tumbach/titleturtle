@@ -34,4 +34,4 @@ let websocket = new WebSocket("ws://localhost:8080/ws");
 ```
 
 ### Known issues
-- *icy* (one of deps) doesn't work with some OGG/ACC streams.
+- *icy* (one of deps) doesn't work with some OGG/AAC streams.
