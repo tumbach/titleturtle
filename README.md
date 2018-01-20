@@ -34,4 +34,4 @@ let websocket = new WebSocket("ws://localhost:8080/ws");
 ```
 
 ### Known issues
-- *icy* (one of deps) doesn't work with some OGG/AAC streams.
+- *icy* (one of deps) doesn't work with Icecast streams that don't provide `icy-metaint` header (ogg). Use mp3 or aac.

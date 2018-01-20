@@ -3,7 +3,7 @@ const event = require('./helpers/event');
 const Websocket = require('./helpers/ws');
 const Stats = require('./Stats');
 
-const WSInstance = Websocket(undefined, 8080);
+const WSInstance = Websocket(undefined, config('server.websocket.port', 8080));
 
 let lazyMode = (station) => {
   let instances = config('instances');
@@ -28,7 +28,9 @@ module.exports.init = () => {
   for (let instance in instances) {
     event.on(`${instance}.update`, (input) => {
       let tags = {};
-      tags[input.station] = config.get('output')(input);
+      let output = config.get('output')(input);
+      config.set(`currentTags.${input.station}`, output);
+      tags[input.station] = output;
       WSInstance.broadcast(JSON.stringify(tags), input.station);
     });
   }
@@ -68,6 +70,7 @@ module.exports.middlewares = [
     }
 
     let currentTags = config('currentTags');
+    currentTags[message].now = Math.floor(+new Date / 1000);
     let tags = {};
     tags[message] = currentTags[message];
     ws.send(JSON.stringify(tags));

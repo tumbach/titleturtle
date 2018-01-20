@@ -1,26 +1,23 @@
 module.exports = {
   server: {
-    websocket: true
+    websocket: {
+      enable: true,
+      port: 8080
+    }
   },
   stations: [
     {
-      protocol: 'https',
-      host: 'radio.tumba.ch',
-      path: '/stream-low',
+      src: 'https://radio.tumba.ch/stream-low',
       id: 'tumbach',
       lazy: false
     },
     {
-      protocol: 'https',
-      host: 'station.waveradio.org',
-      path: '/provodach-low.mp3',
+      src: 'https://station.waveradio.org/provodach-low.mp3',
       id: 'provodach',
       lazy: true
     },
     {
-      protocol: 'https',
-      host: 'station.waveradio.org',
-      path: '/nyan.mp3',
+      src: 'https://station.waveradio.org/nyan.mp3',
       id: 'nyanserver',
       lazy: true
     }
