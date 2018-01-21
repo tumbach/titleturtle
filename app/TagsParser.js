@@ -6,6 +6,7 @@ const event = require('./helpers/event');
 class TagsParser {
   constructor(options) {
     this.options = options;
+    this.fails = 0;
 
     if (this.options.lazy) {
       this.pause();
@@ -37,6 +38,7 @@ class TagsParser {
   }
 
   callbackIcy(stream) {
+    this.fails = 0;
     stream.on('metadata', (metadata) => {
       let [artist, title] = icy.parse(metadata).StreamTitle.split(' - ');
       event.emit(`${this.options.id}.update`, {
@@ -51,7 +53,6 @@ class TagsParser {
       stream.resume();
     });
     stream.on('end', e => {
-      console.log(`${this.options.id} is ended. Restart...`);
       event.emit(`${this.options.id}.end`, e);
     });
   }
@@ -74,16 +75,16 @@ class TagsParser {
   restart() {
     event.emit(`${this.options.id}.update`, {
       station: this.options.id,
-      artist: this.options.protocol + '://' + this.options.host + this.options.path,
+      artist: this.options.src,
       title: 'Нет подключения',
       date: new Date
     });
+    this.stream.removeAllListeners();
+    let secs = 15 + 5 * this.fails++;
+    console.log(`${this.options.id} is ended. Restart in ${secs} s...`);
     setTimeout(async () => {
-      if (!this.stream || this.stream.ended) {
-        return this.stream = await this.getIcy();
-      }
-      this.stream.resume();
-    }, 15 * 60 * 1000);
+      this.getIcy();
+    }, secs * 60 * 1000);
   }
 }
 
