@@ -6,13 +6,9 @@ const event = require('./helpers/event');
 class TagsParser {
   constructor(options) {
     this.options = options;
-    this.fails = 0;
+    this.reconnects = 0;
 
-    if (this.options.lazy) {
-      this.pause();
-    } else {
-      this.getIcy();
-    }
+    this.getIcy();
 
     event.emit('stats.init', this.options.id);
     event.on(`${this.options.id}.end`, e => this.restart(e));
@@ -20,26 +16,37 @@ class TagsParser {
   }
 
   getIcy() {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+      let options = new URL(this.options.src);
+      options.headers = {
+        'User-Agent': 'titleturtle/' + require('../package.json').version
+      };
       let req = icy.get(
-        new URL(this.options.src),
-        stream => {
-          this.callbackIcy(stream);
+        options,
+        async stream => {
           resolve(this.stream = stream);
+          this.callbackIcy(stream);
+          if (this.options.lazy) {
+            await this.pause();
+          }
         }
       );
       req.on('error', e => {
         console.log(`${this.options.id} has an error.`);
         event.emit(`${this.options.id}.end`, e);
+        reject(e);
       });
+      setTimeout(() => reject('Timeout!'), 15000);
     }).catch(e => {
-      console.log(e);
+      console.log(e.message || e);
+      return () => {};
     })
   }
 
   callbackIcy(stream) {
-    this.fails = 0;
-    stream.on('metadata', (metadata) => {
+    this.reconnects = 0;
+    console.log(`${this.options.id} is connected.`);
+    stream.on('metadata', metadata => {
       let [artist, title] = icy.parse(metadata).StreamTitle.split(' - ');
       event.emit(`${this.options.id}.update`, {
         station: this.options.id,
@@ -47,7 +54,7 @@ class TagsParser {
         title: title || '',
         date: new Date
       });
-      if(this.paused) {
+      if (this.paused) {
         return;
       }
       stream.resume();
@@ -59,17 +66,23 @@ class TagsParser {
 
   async pause() {
     if (!this.stream) {
-      this.stream = await this.getIcy();
+      await this.getIcy();
+    }
+    if (!this.stream) {
+      return;
     }
     this.stream.pause();
     this.paused = true;
-    console.log(`${this.options.id} paused.`);
+    console.log(`${this.options.id} is paused.`);
   }
 
-  resume() {
+  async resume() {
+    if (!this.stream) {
+      return await this.getIcy();
+    }
     this.stream.resume();
     this.paused = false;
-    console.log(`${this.options.id} resumed.`);
+    console.log(`${this.options.id} is resumed.`);
   }
 
   restart() {
@@ -79,12 +92,16 @@ class TagsParser {
       title: 'Нет подключения',
       date: new Date
     });
-    this.stream.removeAllListeners();
-    let secs = 15 + 5 * this.fails++;
-    console.log(`${this.options.id} is ended. Restart in ${secs} s...`);
+    if (this.stream) {
+      this.stream.removeAllListeners();
+    }
+
+    let secs = 15 + 5 * this.reconnects++;
+    console.log(`${this.options.id} is ended. Restart in ${secs} seconds...`);
     setTimeout(async () => {
+      console.log(`Restarting ${this.options.id}...`);
       this.getIcy();
-    }, secs * 60 * 1000);
+    }, secs * 1000);
   }
 }
 

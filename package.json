@@ -1,9 +1,9 @@
 {
   "name": "titleturtle",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Thing that parses audio tags (ID3)",
   "scripts": {
-    "start": "NODE_ENV=production node app"
+    "start": "node app"
   },
   "author": "rngnrs <sup@tumba.ch>",
   "homepage": "https://github.com/tumbach/titleturtle",

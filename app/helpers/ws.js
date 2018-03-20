@@ -12,7 +12,7 @@ class WS {
       path: '/ws'
     });
 
-    this.instance.on('connection', (ws) => {
+    this.instance.on('connection', ws => {
       ws.isAlive = true;
       ws.id = (Math.floor(Math.random() * 0xFFFF)).toString(16).toUpperCase();
 
@@ -21,10 +21,10 @@ class WS {
       ws.on('pong', () => {
         ws.isAlive = true;
       });
-      ws.on('message', (message) => {
+      ws.on('message', message => {
         this.onMessage(message, ws);
       });
-      ws.on('error', (err) => {
+      ws.on('error', err => {
         //
       });
       ws.on('close', () => {
@@ -33,14 +33,14 @@ class WS {
     });
 
     this.interval = setInterval(() => {
-      this.instance.clients.forEach(function each(ws) {
-        if (!ws.isAlive) {
-          event.emit('stats.offline', ws.id);
-          return ws.terminate();
+      for (let client of this.instance.clients) {
+        if (!client.isAlive) {
+          event.emit('stats.offline', client.id);
+          return client.terminate();
         }
-        ws.isAlive = false;
-        ws.ping('NUS', false, true);
-      });
+        client.isAlive = false;
+        client.ping('NUS', false, true);
+      }
     }, 30000);
   }
 
