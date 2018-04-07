@@ -4,6 +4,7 @@ const { URL } = require('url');
 const event = require('./helpers/event');
 
 class TagsParser {
+
   constructor(options) {
     this.options = options;
     this.reconnects = 0;
@@ -12,40 +13,47 @@ class TagsParser {
 
     event.emit('stats.init', this.options.id);
     event.on(`${this.options.id}.end`, e => this.restart(e));
+
     return this;
   }
 
   getIcy() {
     return new Promise((resolve, reject) => {
+
       let options = new URL(this.options.src);
       options.headers = {
         'User-Agent': 'titleturtle/' + require('../package.json').version
       };
-      let req = icy.get(
-        options,
-        async stream => {
-          resolve(this.stream = stream);
-          this.callbackIcy(stream);
-          if (this.options.lazy) {
-            await this.pause();
-          }
-        }
-      );
+
+      let req = icy.get(options, stream => resolve(this.callbackIcy(stream)));
+
       req.on('error', e => {
-        console.log(`${this.options.id} has an error.`);
+        console.log(`[${this.options.id}] Error.`);
         event.emit(`${this.options.id}.end`, e);
         reject(e);
       });
+      req.on('close', e => {
+        console.log(`[${this.options.id}] Closed.`);
+        event.emit(`${this.options.id}.end`, e);
+        reject(e);
+      });
+
       setTimeout(() => reject('Timeout!'), 15000);
+
     }).catch(e => {
       console.log(e.message || e);
       return () => {};
     })
   }
 
-  callbackIcy(stream) {
-    this.reconnects = 0;
-    console.log(`${this.options.id} is connected.`);
+  async callbackIcy(stream) {
+    if (this.options.lazy) {
+      await this.pause();
+    }
+
+    this.closeWorkaround = setTimeout(() => this.reconnects = 0, 5000);
+    console.log(`[${this.options.id}] Connected.`);
+
     stream.on('metadata', metadata => {
       let [artist, title] = icy.parse(metadata).StreamTitle.split(' - ');
       event.emit(`${this.options.id}.update`, {
@@ -62,6 +70,8 @@ class TagsParser {
     stream.on('end', e => {
       event.emit(`${this.options.id}.end`, e);
     });
+
+    return this.stream = stream;
   }
 
   async pause() {
@@ -73,7 +83,7 @@ class TagsParser {
     }
     this.stream.pause();
     this.paused = true;
-    console.log(`${this.options.id} is paused.`);
+    console.log(`[${this.options.id}] Paused.`);
   }
 
   async resume() {
@@ -82,10 +92,12 @@ class TagsParser {
     }
     this.stream.resume();
     this.paused = false;
-    console.log(`${this.options.id} is resumed.`);
+    console.log(`[${this.options.id}] Resumed.`);
   }
 
   restart() {
+    clearTimeout(this.closeWorkaround);
+
     event.emit(`${this.options.id}.update`, {
       station: this.options.id,
       artist: this.options.src,
@@ -97,9 +109,9 @@ class TagsParser {
     }
 
     let secs = 15 + 5 * this.reconnects++;
-    console.log(`${this.options.id} is ended. Restart in ${secs} seconds...`);
+    console.log(`[${this.options.id}] Restart in ${secs} seconds.`);
     setTimeout(async () => {
-      console.log(`Restarting ${this.options.id}...`);
+      console.log(`[${this.options.id}] Restarting...`);
       this.getIcy();
     }, secs * 1000);
   }
