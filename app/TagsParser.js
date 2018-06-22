@@ -7,9 +7,11 @@ class TagsParser {
 
   constructor(options) {
     this.options = options;
-    this.reconnects = 0;
+    this.fails = 0;
+    this.maxFails = 3;
+    this.timeout = 30 * /*60 **/ 1000; // m s ms
 
-    this.getIcy();
+    this.init();
 
     event.emit('stats.init', this.options.id);
     event.on(`${this.options.id}.end`, e => this.restart(e));
@@ -17,7 +19,7 @@ class TagsParser {
     return this;
   }
 
-  getIcy() {
+  init() {
     return new Promise((resolve, reject) => {
 
       let options = new URL(this.options.src);
@@ -29,14 +31,13 @@ class TagsParser {
 
       req.on('error', e => {
         console.log(`[${this.options.id}] Error.`);
-        event.emit(`${this.options.id}.end`, e);
         reject(e);
       });
-      req.on('close', e => {
+      /*req.on('close', e => {
         console.log(`[${this.options.id}] Closed.`);
         event.emit(`${this.options.id}.end`, e);
         reject(e);
-      });
+      });*/
 
       setTimeout(() => reject('Timeout!'), 15000);
 
@@ -51,8 +52,20 @@ class TagsParser {
       await this.pause();
     }
 
-    this.closeWorkaround = setTimeout(() => this.reconnects = 0, 5000);
+    this.closeWorkaround = setTimeout(() => {
+      console.log(`[${this.options.id}] 0 fails! (normal behaviour)`);
+      this.fails = 0;
+    }, 15000);
     console.log(`[${this.options.id}] Connected.`);
+
+    let htmlWorkaround = e => {
+      if (e.toString().includes('<html>')) {
+        return this.restart();
+      }
+      stream.removeListener('data', htmlWorkaround);
+    };
+
+    stream.on('data', e => htmlWorkaround(e));
 
     stream.on('metadata', metadata => {
       let [artist, title] = icy.parse(metadata).StreamTitle.split(' - ');
@@ -60,14 +73,18 @@ class TagsParser {
         station: this.options.id,
         artist: artist || '',
         title: title || '',
-        date: new Date
+        date: +new Date
       });
       if (this.paused) {
         return;
       }
       stream.resume();
     });
+    stream.on('error', e => {
+      console.log(`[${this.options.id}] Error!.`, e);
+    });
     stream.on('end', e => {
+      console.log(`[${this.options.id}] End o.o`);
       event.emit(`${this.options.id}.end`, e);
     });
 
@@ -76,7 +93,7 @@ class TagsParser {
 
   async pause() {
     if (!this.stream) {
-      await this.getIcy();
+      await this.init();
     }
     if (!this.stream) {
       return;
@@ -88,32 +105,42 @@ class TagsParser {
 
   async resume() {
     if (!this.stream) {
-      return await this.getIcy();
+      return await this.init();
     }
     this.stream.resume();
     this.paused = false;
     console.log(`[${this.options.id}] Resumed.`);
   }
 
+  fini() {
+    if (this.stream) {
+      this.stream.removeAllListeners();
+    }
+    this.stream = undefined;
+  }
+
   restart() {
     clearTimeout(this.closeWorkaround);
+    let timeout = 5000 * this.fails++ + 15000;
+
+    this.fini();
+
+    if (this.fails >= this.maxFails) {
+      timeout = this.timeout;
+    }
 
     event.emit(`${this.options.id}.update`, {
       station: this.options.id,
       artist: this.options.src,
-      title: 'Нет подключения',
-      date: new Date
+      title: `Переподключение через ${timeout/1000} секунд...`,
+      date: +new Date
     });
-    if (this.stream) {
-      this.stream.removeAllListeners();
-    }
 
-    let secs = 15 + 5 * this.reconnects++;
-    console.log(`[${this.options.id}] Restart in ${secs} seconds.`);
+    console.log(`[${this.options.id}] Restart in ${timeout/1000} seconds.`);
     setTimeout(async () => {
       console.log(`[${this.options.id}] Restarting...`);
-      this.getIcy();
-    }, secs * 1000);
+      this.init();
+    }, timeout);
   }
 }
 

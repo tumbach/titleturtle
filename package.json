@@ -1,6 +1,6 @@
 {
   "name": "titleturtle",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Thing that parses audio tags (ID3)",
   "scripts": {
     "start": "node app"
