@@ -7,8 +7,8 @@ class WS {
   constructor ({server, port}) {
     this.handlers = [];
     this.instance = new WebSocket.Server({
-      server: server,
-      port: port,
+      server,
+      port,
       path: '/ws'
     });
 
@@ -23,9 +23,6 @@ class WS {
       });
       ws.on('message', message => {
         this.onMessage(message, ws);
-      });
-      ws.on('error', err => {
-        //
       });
       ws.on('close', () => {
         event.emit('stats.offline', ws.id);
@@ -100,8 +97,8 @@ class WS {
 module.exports = (server, port) => {
   if (!instance) {
     instance = new WS({
-      server: server,
-      port: port
+      server,
+      port
     });
   }
   return instance;

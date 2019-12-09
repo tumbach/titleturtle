@@ -14,7 +14,7 @@ class TagsParser {
     this.init();
 
     event.emit('stats.init', this.options.id);
-    event.on(`${this.options.id}.end`, e => this.restart(e));
+    event.on(`${this.options.id}.end`, this.restart);
 
     return this;
   }
@@ -33,11 +33,6 @@ class TagsParser {
         console.log(`[${this.options.id}] Error.`);
         reject(e);
       });
-      /*req.on('close', e => {
-        console.log(`[${this.options.id}] Closed.`);
-        event.emit(`${this.options.id}.end`, e);
-        reject(e);
-      });*/
 
       setTimeout(() => reject('Timeout!'), 15000);
 
@@ -64,8 +59,7 @@ class TagsParser {
       }
       stream.removeListener('data', htmlWorkaround);
     };
-
-    stream.on('data', e => htmlWorkaround(e));
+    stream.on('data', htmlWorkaround);
 
     stream.on('metadata', metadata => {
       let [artist, title] = icy.parse(metadata).StreamTitle.split(' - ');

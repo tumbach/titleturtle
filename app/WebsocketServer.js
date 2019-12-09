@@ -2,6 +2,7 @@ const config = require('./helpers/config');
 const event = require('./helpers/event');
 const Websocket = require('./helpers/ws');
 const Stats = require('./Stats');
+const output = require('./helpers/output');
 
 const WSInstance = Websocket(undefined, config('server.websocket.port', 8080));
 
@@ -24,26 +25,21 @@ let lazyMode = (station) => {
 
 
 module.exports.init = () => {
-  let instances = config('instances');
-  for (let instance in instances) {
-    event.on(`${instance}.update`, (input) => {
+  for (let instance in config('instances')) {
+    event.on(`${instance}.update`, input => {
       let tags = {};
-      let output = config.get('output')(input);
+      let output = output(input);
       config.set(`currentTags.${input.station}`, output);
       tags[input.station] = output;
       WSInstance.broadcast(JSON.stringify(tags), input.station);
     });
   }
 
-  [`stats.online`, `stats.offline`].map((type) => {
-    event.on(type, () => {
-      WSInstance.broadcast(JSON.stringify(Stats.get()), 'stats');
-    });
+  [`stats.online`, `stats.offline`].map(type => {
+    event.on(type, () => WSInstance.broadcast(JSON.stringify(Stats.get()), 'stats'));
   });
 
-  this.middlewares.map(([command, func]) => {
-    WSInstance.use(command, func);
-  });
+  this.middlewares.map(([command, func]) => WSInstance.use(command, func));
 };
 
 module.exports.middlewares = [
@@ -51,10 +47,8 @@ module.exports.middlewares = [
     let exists = false;
     let instances = config('instances');
     message = message.toLowerCase();
-    for (let instance in instances) {
-      if (instance === message) {
-        exists = true;
-      }
+    if (instances.includes(message)) {
+      exists = true;
     }
     if (!exists) {
       return err(ws, 404);
@@ -89,10 +83,10 @@ module.exports.middlewares = [
     if (!ws.type) {
       ws.type = new Set();
     }
-    if (message.toLowerCase().indexOf('sbcr') === 0) {
+    if (message.toLowerCase().includes('sbcr', 0)) {
       ws.type.add('stats');
       return ws.send(JSON.stringify(Stats.get()));
-    } else if (message.toLowerCase().indexOf('unsb') === 0) {
+    } else if (message.toLowerCase().includes('unsb', 0)) {
       return ws.type.delete('stats');
     }
     ws.send(JSON.stringify(Stats.get(message)));
