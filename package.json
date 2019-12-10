@@ -1,6 +1,6 @@
 {
   "name": "titleturtle",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Thing that parses audio tags (ID3)",
   "scripts": {
     "start": "node app"
@@ -10,7 +10,7 @@
   "dependencies": {
     "figurecon": "github:rngnrs/figurecon",
     "icy": "^2.1.0",
-    "ws": "^3.3.3"
+    "ws": "^7.2.0"
   },
   "devDependencies": {},
   "engines": {

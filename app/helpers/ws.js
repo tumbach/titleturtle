@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const event = require('./event');
+const event = require('./event.js');
 
 let instance;
 
@@ -50,6 +50,10 @@ class WS {
 
   broadcast (data, type) {
     for (let client of this.instance.clients) {
+      if (data instanceof Object) {
+        data = JSON.stringify(data);
+      }
+
       if (client.readyState === WebSocket.OPEN) {
         if (type && client.type && client.type.has(type)) {
           client.send(data);

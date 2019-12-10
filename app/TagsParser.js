@@ -1,7 +1,7 @@
 const icy = require('icy');
 const { URL } = require('url');
 
-const event = require('./helpers/event');
+const event = require('./helpers/event.js');
 
 class TagsParser {
 
@@ -9,7 +9,7 @@ class TagsParser {
     this.options = options;
     this.fails = 0;
     this.maxFails = 3;
-    this.timeout = 30 * /*60 **/ 1000; // m s ms
+    this.timeout = 15 * 1000; // s ms
 
     this.init();
 
@@ -34,7 +34,7 @@ class TagsParser {
         reject(e);
       });
 
-      setTimeout(() => reject('Timeout!'), 15000);
+      setTimeout(() => reject('Timeout!'), this.timeout);
 
     }).catch(e => {
       console.log(e.message || e);
@@ -50,7 +50,7 @@ class TagsParser {
     this.closeWorkaround = setTimeout(() => {
       console.log(`[${this.options.id}] 0 fails! (normal behaviour)`);
       this.fails = 0;
-    }, 15000);
+    }, this.timeout);
     console.log(`[${this.options.id}] Connected.`);
 
     let htmlWorkaround = e => {
@@ -62,11 +62,11 @@ class TagsParser {
     stream.on('data', htmlWorkaround);
 
     stream.on('metadata', metadata => {
-      let [artist, title] = icy.parse(metadata).StreamTitle.split(' - ');
-      event.emit(`${this.options.id}.update`, {
+      let [artist, ...title] = icy.parse(metadata).StreamTitle.split(' - ');
+      event.emit(`station.${this.options.id}.update`, {
         station: this.options.id,
         artist: artist || '',
-        title: title || '',
+        title: title.join(' - ') || '',
         date: +new Date
       });
       if (this.paused) {
