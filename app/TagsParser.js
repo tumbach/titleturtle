@@ -9,12 +9,12 @@ class TagsParser {
     this.options = options;
     this.fails = 0;
     this.maxFails = 3;
-    this.timeout = 15 * 1000; // s ms
+    this.timeout = 30 * 1000; // s ms
 
     this.init();
 
     event.emit('stats.init', this.options.id);
-    event.on(`${this.options.id}.end`, this.restart);
+    event.on(`station.${this.options.id}.end`, () => this.restart());
 
     return this;
   }
@@ -30,7 +30,8 @@ class TagsParser {
       let req = icy.get(options, stream => resolve(this.callbackIcy(stream)));
 
       req.on('error', e => {
-        console.log(`[${this.options.id}] Error.`);
+        console.log(`[${this.options.id}] Error:`, e);
+        this.fini();
         reject(e);
       });
 
@@ -61,6 +62,10 @@ class TagsParser {
     };
     stream.on('data', htmlWorkaround);
 
+    let oggWorkaround = setTimeout(() => {
+      this.fini(`No tags. Sure, we're parsing OGG, but we can't. Look into README.md.`);
+    }, 5000);
+
     stream.on('metadata', metadata => {
       let [artist, ...title] = icy.parse(metadata).StreamTitle.split(' - ');
       event.emit(`station.${this.options.id}.update`, {
@@ -73,13 +78,14 @@ class TagsParser {
         return;
       }
       stream.resume();
+      clearTimeout(oggWorkaround);
     });
     stream.on('error', e => {
-      console.log(`[${this.options.id}] Error!.`, e);
+      console.log(`[${this.options.id}] Stream error!`, e);
     });
-    stream.on('end', e => {
-      console.log(`[${this.options.id}] End o.o`);
-      event.emit(`${this.options.id}.end`, e);
+    stream.on('end', () => {
+      console.log(`[${this.options.id}] End! ( o.o)`);
+      event.emit(`station.${this.options.id}.end`);
     });
 
     return this.stream = stream;
@@ -106,24 +112,25 @@ class TagsParser {
     console.log(`[${this.options.id}] Resumed.`);
   }
 
-  fini() {
+  fini(e) {
+    clearTimeout(this.closeWorkaround);
     if (this.stream) {
       this.stream.removeAllListeners();
+      this.stream.destroy(e);
     }
     this.stream = undefined;
   }
 
   restart() {
-    clearTimeout(this.closeWorkaround);
-    let timeout = 5000 * this.fails++ + 15000;
+    let timeout = 5000 * this.fails + 10000;
 
     this.fini();
 
-    if (this.fails >= this.maxFails) {
+    if (this.fails++ > this.maxFails) {
       timeout = this.timeout;
     }
 
-    event.emit(`${this.options.id}.update`, {
+    event.emit(`station.${this.options.id}.update`, {
       station: this.options.id,
       artist: this.options.src,
       title: `Переподключение через ${timeout/1000} секунд...`,

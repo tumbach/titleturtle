@@ -1,7 +1,7 @@
 let icy = require('icy');
 const { URL } = require('url');
 
-let streamUrl = new URL('http://tumba.ch:8000/stream');
+let streamUrl = new URL('https://radio.tumba.ch/stream-low');
 //let streamUrl = 'https://station.waveradio.org/provodach.mp3';
 
 icy.get(streamUrl, (res) => {

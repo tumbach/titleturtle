@@ -5,7 +5,6 @@ const TagsParser = require('./TagsParser.js');
 const WebsocketServer = require('./WebsocketServer.js');
 const History = require('./History.js');
 
-config.set(`currentTags`, []);
 let instances = {};
 
 let stations = config('stations', []);
@@ -14,12 +13,11 @@ if (!stations.length) {
   process.exit(0);
 }
 
-stations.forEach(station => {
-  let { id } = station;
-  instances[id] = new TagsParser(station);
-  config.set(`currentTags.${id}`, {});
-
-  instances[id].history = new History(config(`stations.${station}.historyLength`, config('historyLength')));
+stations.forEach((station, index) => {
+  let { id: stationId } = station;
+  instances[stationId] = new TagsParser(station);
+  instances[stationId].currentTags = {};
+  instances[stationId].history = new History(config(`stations.${index}.historyLength`, config('historyLength')));
 });
 
 if (config('server.websocket.enable')) {
@@ -39,7 +37,7 @@ if (config('server.websocket.enable')) {
     };
 
   let middlewares = {
-    "SBCR": (command, message, ws, err) => {
+    "SUB": (command, message, ws, err) => {
       let exists = false;
       let stationId = message.toLowerCase();
       if (stationId in instances) {
@@ -58,13 +56,12 @@ if (config('server.websocket.enable')) {
         instances[stationId].resume();
       }
 
-      let currentTags = config('currentTags');
-      currentTags[stationId].now = Math.floor(+new Date / 1000);
+      instances[stationId].currentTags.now = Math.floor(+new Date / 1000);
       let tags = {};
-      tags[stationId] = currentTags[stationId];
+      tags[stationId] = instances[stationId].currentTags;
       ws.send(JSON.stringify(tags));
     },
-    "UNSB": (command, message, ws, err) => {
+    "UNSUB": (command, message, ws, err) => {
       message = message.toLowerCase();
       ws.type.delete(message);
       Stats.remove(ws.id, message);
@@ -78,10 +75,10 @@ if (config('server.websocket.enable')) {
       if (!ws.type) {
         ws.type = new Set();
       }
-      if (message.toLowerCase().includes('sbcr', 0)) {
+      if (message.toUpperCase().includes('sub', 0)) {
         ws.type.add('stats');
         return ws.send(JSON.stringify(Stats.get()));
-      } else if (message.toLowerCase().includes('unsb', 0)) {
+      } else if (message.toUpperCase().includes('unsub', 0)) {
         return ws.type.delete('stats');
       }
       ws.send(JSON.stringify(Stats.get(message)));
@@ -102,7 +99,7 @@ if (config('server.websocket.enable')) {
     event.on(`station.${stationId}.update`, input => {
       let output = config('output')(input);
       let history = instances[stationId].history;
-      config.set(`currentTags.${stationId}`, output);
+      instances[stationId].currentTags =  output;
       let tags = {};
       tags[input.station] = output;
       WSInstance.broadcast(tags, input.station);
@@ -115,4 +112,10 @@ if (config('server.websocket.enable')) {
   [`stats.online`, `stats.offline`].forEach(type => {
     event.on(type, () => WSInstance.broadcast(Stats.get(), 'stats'));
   });
+} else {
+  for (let stationId in instances) {
+    event.on(`station.${stationId}.update`, input => {
+      instances[stationId].currentTags = config('output')(input);
+    });
+  }
 }
