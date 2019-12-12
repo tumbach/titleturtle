@@ -1,7 +1,7 @@
 const Figurecon = require('figurecon');
 
 module.exports = new Figurecon(__dirname + '/../../config.js', {
-  output: ({station, artist, title, date}) => {
+  output: ({station, artist, title, date} = {}) => {
     return {
       artist,
       title,

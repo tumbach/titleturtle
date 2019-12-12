@@ -97,15 +97,20 @@ if (config('server.websocket.enable')) {
 
   for (let stationId in instances) {
     event.on(`station.${stationId}.update`, input => {
-      let output = config('output')(input);
-      let history = instances[stationId].history;
-      instances[stationId].currentTags =  output;
-      let tags = {};
-      tags[input.station] = output;
-      WSInstance.broadcast(tags, input.station);
+      let { currentTags, history } = instances[stationId];
+      if (Object.keys(currentTags).length) {
+        delete currentTags.now;
+        history.add(currentTags);
+      }
 
-      delete output.now;
-      history.add(output);
+      if (!input.error) {
+        let output = config('output')(input);
+        instances[stationId].currentTags = output;
+
+        let tags = {};
+        tags[stationId] = output;
+        WSInstance.broadcast(tags, stationId);
+      }
     });
   }
 

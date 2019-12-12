@@ -31,7 +31,11 @@ class TagsParser {
 
       req.on('error', e => {
         console.log(`[${this.options.id}] Error:`, e);
-        this.fini();
+        if (e && e.code) {
+          this.restart();
+        } else {
+          this.fini(e);
+        }
         reject(e);
       });
 
@@ -131,6 +135,7 @@ class TagsParser {
     }
 
     event.emit(`station.${this.options.id}.update`, {
+      error: true,
       station: this.options.id,
       artist: this.options.src,
       title: `Переподключение через ${timeout/1000} секунд...`,
