@@ -75,10 +75,10 @@ if (config('server.websocket.enable')) {
       if (!ws.type) {
         ws.type = new Set();
       }
-      if (message.toUpperCase().includes('sub', 0)) {
+      if (message.toUpperCase().includes('SUB', 0)) {
         ws.type.add('stats');
         return ws.send(JSON.stringify(Stats.get()));
-      } else if (message.toUpperCase().includes('unsub', 0)) {
+      } else if (message.toUpperCase().includes('UNSUB', 0)) {
         return ws.type.delete('stats');
       }
       ws.send(JSON.stringify(Stats.get(message)));
