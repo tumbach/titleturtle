@@ -10,9 +10,9 @@
   "dependencies": {
     "icecast-metadata-js": "^0.5.4",
     "needle": "^2.9.0",
+    "noop-stream": "^0.1.0",
     "ws": "^7.2.0"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">= 14.0.0"
   }

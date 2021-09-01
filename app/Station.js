@@ -1,5 +1,6 @@
 const { IcecastMetadataStream } = require("icecast-metadata-js");
 const needle = require('needle');
+const { writableNoopStream: devNull } = require('noop-stream');
 
 const packageJSON = require('../package.json');
 const event = require('./helpers/event.js');
@@ -93,11 +94,13 @@ class Station {
             ? ['ogg']
             : ['icy']
         });
-        icecast.metadata.on('data', this.#parseTags.bind(this));
+        icecast.metadata.on('data', data => this.#parseTags(data));
         icecast.metadata.on('error', () => {
           this.reconnect(30e3);
         });
         stream.pipe(icecast);
+        icecast.stream.pipe(devNull());
+        icecast.metadata.pipe(devNull({ objectMode: true }));
       });
       stream.on('done', () => {
         this.reconnect(5e3);
