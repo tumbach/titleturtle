@@ -1,6 +1,6 @@
 {
   "name": "titleturtle",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "Thing that parses audio tags (ID3)",
   "scripts": {
     "start": "node app"
@@ -8,12 +8,12 @@
   "author": "rngnrs <sup@tumba.ch>",
   "homepage": "https://github.com/tumbach/titleturtle",
   "dependencies": {
-    "figurecon": "github:rngnrs/figurecon",
-    "icy": "^2.1.0",
+    "icecast-metadata-js": "^0.5.4",
+    "needle": "^2.9.0",
     "ws": "^7.2.0"
   },
   "devDependencies": {},
   "engines": {
-    "node": ">= 8.0.0"
+    "node": ">= 14.0.0"
   }
 }

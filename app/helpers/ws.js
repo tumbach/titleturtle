@@ -14,9 +14,9 @@ class WS {
 
     this.instance.on('connection', ws => {
       ws.isAlive = true;
-      ws.id = (Math.floor(Math.random() * 0xFFFF)).toString(16).toUpperCase();
+      ws.id = (Math.floor(Math.random() * 0xFFFFFF)).toString(16).toUpperCase();
 
-      event.emit('stats.online', ws.id);
+      //event.emit('stats.online', ws.id);
 
       ws.on('pong', () => {
         ws.isAlive = true;
@@ -32,7 +32,7 @@ class WS {
     this.interval = setInterval(() => {
       for (let client of this.instance.clients) {
         if (!client.isAlive) {
-          event.emit('stats.offline', client.id);
+          //event.emit('stats.offline', client.id);
           return client.terminate();
         }
         client.isAlive = false;
