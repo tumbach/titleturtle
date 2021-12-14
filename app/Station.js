@@ -1,15 +1,8 @@
 const { IcecastMetadataStream } = require("icecast-metadata-js");
-const needle = require('needle');
 const { writableNoopStream: devNull } = require('noop-stream');
 
-const packageJSON = require('../package.json');
 const event = require('./helpers/event.js');
-
-needle.defaults({
-  compressed: true,
-  user_agent: 'titleturtle/' + packageJSON.version,
-  parse_response: false
-});
+const HTTPRequester = require('./helpers/HTTPRequester.js');
 
 class Station {
 
@@ -59,7 +52,10 @@ class Station {
       this.#endpoint = this.playlist.slice(-1).pop().url;
       return this.playlist;
     }
-    let response = await needle('get', this.#playlistURL);
+    let request = new HTTPRequester({
+      url: this.#playlistURL
+    })
+    let response = await request.request();
     if (response.statusCode >= 400) {
       return false;
     }
@@ -82,7 +78,11 @@ class Station {
 
   #fetch(stream) {
     try {
-      stream.on('header', (statusCode, headers) => {
+      stream.on('response', response => {
+        let {statusCode, headers} = response;
+        if (statusCode >= 500) {
+          return this.reconnect(30e3);
+        }
         let mime = headers['content-type'];
         let bitrate = headers['icy-br'];
         let metaint = headers['icy-metaint'];
@@ -95,20 +95,24 @@ class Station {
             : ['icy']
         });
         icecast.metadata.on('data', data => this.#parseTags(data));
-        icecast.metadata.on('error', () => {
+        icecast.metadata.on('error', e => {
+          console.log(e);
           this.reconnect(30e3);
         });
-        stream.pipe(icecast);
+        response.pipe(icecast);
         icecast.stream.pipe(devNull());
         icecast.metadata.pipe(devNull({ objectMode: true }));
       });
-      stream.on('done', () => {
+      stream.on('done', e => {
+        console.log(e);
         this.reconnect(5e3);
       });
-      stream.on('timeout', () => {
+      stream.on('timeout', e => {
+        console.log(e);
         this.reconnect(10e3);
       });
-      stream.on('error', () => {
+      stream.on('error', e => {
+        console.log(e);
         this.reconnect(30e3);
       });
     } catch (err) {
@@ -129,7 +133,10 @@ class Station {
     if (this.#stream) {
       return true;
     }
-    this.#stream = needle.get(this.#endpoint, {
+    let request = new HTTPRequester({
+      url: this.#endpoint
+    })
+    this.#stream = request.stream({
       headers: {
         'Icy-Metadata': '1'
       }

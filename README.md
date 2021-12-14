@@ -36,5 +36,5 @@ let websocket = new WebSocket("ws://localhost:8080/ws");
 ```
 
 ### Known issues
-- Titleturtle is experiencing some issues during establishing a connection to https://anon.fm streams.
+- Titleturtle is experiencing some issues during reconnections (see issue #1).
 - Titleturtle can not choose a stream by the lowest bitrate for now. This feature would save bandwidth.
