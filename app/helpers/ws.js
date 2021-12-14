@@ -36,7 +36,7 @@ class WS {
           return client.terminate();
         }
         client.isAlive = false;
-        client.ping('NUS', false, true);
+        client.ping('NUS', false);
       }
     }, 30000);
   }
