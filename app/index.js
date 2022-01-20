@@ -2,6 +2,9 @@ const Config = require('../config.js');
 const Station = require('./Station.js');
 const WebsocketServer = require('./WebsocketServer.js');
 const History = require('./History.js');
+const rootCas = require('ssl-root-cas').create();
+
+require('https').globalAgent.options.ca = rootCas;
 
 if (!Config.stations.length) {
   console.log('Empty config! Please, copy an example (./config.js.example) and change it.');
@@ -18,7 +21,6 @@ if (!Config.stations.length) {
       station.history = new History(historyLength, historyTtl);
       station.onTagUpdate(tags => {
         station.history.add(tags);
-        console.log(station.id, tags);
       });
       station.play();
     }
