@@ -40,7 +40,7 @@ class Station {
     this.tags = {
       artist: tags.artist || null,
       title: tags.title || null,
-      date: tags.date || Station.now(),
+      date: tags.date ?? Station.now(),
     };
     event.emit(`${this.id}.update`, this.getTags(false));
   }
@@ -96,32 +96,32 @@ class Station {
         });
         icecast.metadata.on('data', data => this.#parseTags(data));
         icecast.metadata.on('error', e => {
-          console.log(e);
-          this.reconnect(30e3);
+          this.reconnect(30e3, e);
         });
         response.pipe(icecast);
         icecast.stream.pipe(devNull());
         icecast.metadata.pipe(devNull({ objectMode: true }));
       });
       stream.on('done', e => {
-        console.log(e);
-        this.reconnect(5e3);
+        this.reconnect(5e3, e);
       });
       stream.on('timeout', e => {
-        console.log(e);
-        this.reconnect(10e3);
+        this.reconnect(10e3, e);
       });
       stream.on('error', e => {
-        console.log(e);
-        this.reconnect(30e3);
+        this.reconnect(30e3, e);
       });
     } catch (err) {
-      console.error(err.message);
-      this.reconnect(30e3);
+      this.reconnect(30e3, err);
     }
   }
 
-  reconnect(ms) {
+  reconnect(ms = 30e3, e) {
+    e && console.error(e);
+    if (!Object.keys(this.tags).length) {
+      console.log(`[${this.id}] Reconnect is not needed: no tags were fetched. (${this.#endpoint})`);
+      return false;
+    }
     console.log(`[${this.id}] Reconnect in ${ms} ms. (${this.#endpoint})`);
     this.pause();
     setTimeout(() => {
@@ -130,7 +130,7 @@ class Station {
   }
 
   play() {
-    if (this.#stream) {
+    if (this.isPlaying()) {
       return true;
     }
     let request = new HTTPRequester({
@@ -145,10 +145,12 @@ class Station {
   }
 
   pause() {
-    if (!this.#stream || !this.#stream.request) {
+    if (!this.isPlaying()) {
       return true;
     }
-    this.#stream.request.abort();
+    if (this.#stream.request) {
+      this.#stream.request.abort();
+    }
     this.#stream.destroy();
     this.#stream = null;
   }
