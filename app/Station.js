@@ -8,16 +8,15 @@ class Station {
 
   #endpoint;
   #playlistURL;
-  #onTagUpdate;
   #stream;
+  #timeout = null;
+  tags = {};
+  playlist = [];
 
   constructor({id, name, playlist}) {
     this.id = id;
     this.name = name;
     this.#playlistURL = playlist;
-
-    this.tags = {};
-    this.playlist = [];
   }
 
   onTagUpdate(callback) {
@@ -81,7 +80,7 @@ class Station {
       stream.on('response', response => {
         let {statusCode, headers} = response;
         if (statusCode >= 500) {
-          return this.reconnect(30e3);
+          return this.reconnect(30e3, `Error ${statusCode}`);
         }
         let mime = headers['content-type'];
         let bitrate = headers['icy-br'];
@@ -94,22 +93,28 @@ class Station {
             ? ['ogg']
             : ['icy']
         });
-        icecast.metadata.on('data', data => this.#parseTags(data));
+        icecast.metadata.on('data', data => {
+          let tags = Station.parseTags(data);
+          this.setTags(tags);
+        });
         icecast.metadata.on('error', e => {
           this.reconnect(30e3, e);
+        });
+        icecast.on('pipe', () => {
+          console.log(`[${this.id}] Connected to ${this.#endpoint}`);
+        })
+        response.on('close', () => {
+          this.reconnect(5e3, "Connection was closed");
         });
         response.pipe(icecast);
         icecast.stream.pipe(devNull());
         icecast.metadata.pipe(devNull({ objectMode: true }));
       });
-      stream.on('done', e => {
-        this.reconnect(5e3, e);
-      });
       stream.on('timeout', e => {
         this.reconnect(10e3, e);
       });
       stream.on('error', e => {
-        this.reconnect(30e3, e);
+        this.reconnect(20e3, e);
       });
     } catch (err) {
       this.reconnect(30e3, err);
@@ -117,6 +122,7 @@ class Station {
   }
 
   reconnect(ms = 30e3, e) {
+    clearTimeout(this.#timeout);
     e && console.error(e);
     if (!Object.keys(this.tags).length) {
       console.log(`[${this.id}] Reconnect is not needed: no tags were fetched. (${this.#endpoint})`);
@@ -124,7 +130,7 @@ class Station {
     }
     console.log(`[${this.id}] Reconnect in ${ms} ms. (${this.#endpoint})`);
     this.pause();
-    setTimeout(() => {
+    this.#timeout = setTimeout(() => {
       this.play();
     }, ms);
   }
@@ -159,7 +165,7 @@ class Station {
     return !!this.#stream;
   }
 
-  #parseTags({metadata/*, time*/}) {
+  static parseTags({metadata/*, time*/}) {
     let tags = {
       artist: metadata.ARTIST || null,
       title: metadata.TITLE || null
@@ -171,10 +177,7 @@ class Station {
       tags.title = title;
     }
 
-    this.setTags(tags);
-    if (typeof this.#onTagUpdate === 'function') {
-      this.#onTagUpdate(tags);
-    }
+    return tags;
   }
 
   static now() {
