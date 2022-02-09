@@ -33,7 +33,8 @@ if (!Config.stations.length) {
     let middlewares = {
       "SUB": require('./Routing/Subscribe.js')(stations),
       "UNSUB": require('./Routing/Unsubscribe.js'),
-      "HISTORY": require('./Routing/History.js')(stations)
+      "HISTORY": require('./Routing/History.js')(stations),
+      "STATIONS": require('./Routing/Stations.js')(stations),
     };
     let WSInstance = WebsocketServer.init(middlewares);
     for (let station of stations) {
