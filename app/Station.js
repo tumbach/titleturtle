@@ -1,5 +1,6 @@
 const { IcecastMetadataStream } = require("icecast-metadata-js");
 const { writableNoopStream: devNull } = require('noop-stream');
+const { decode } = require('html-entities');
 
 const event = require('./helpers/event.js');
 const HTTPRequester = require('./helpers/HTTPRequester.js');
@@ -176,6 +177,9 @@ class Station {
       tags.artist = artist;
       tags.title = title;
     }
+
+    tags.artist = decode(tags.artist, {scope: 'strict'});
+    tags.title =  decode(tags.title,  {scope: 'strict'});
 
     return tags;
   }
