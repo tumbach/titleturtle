@@ -12,6 +12,8 @@ if (!Config.stations.length) {
 }
 
 (async () => {
+  let timestamp = Station.now();
+
   let stations = Config.stations.map(async s => { // { id, name, playlist, historyLength, historyTtl }
     let station = new Station(s);
 
@@ -35,6 +37,7 @@ if (!Config.stations.length) {
       "UNSUB": require('./Routing/Unsubscribe.js'),
       "HISTORY": require('./Routing/History.js')(stations),
       "STATIONS": require('./Routing/Stations.js')(stations),
+      "UPTIME": require('./Routing/Uptime.js')(stations, timestamp, Station.now)
     };
     let WSInstance = WebsocketServer.init(middlewares);
     for (let station of stations) {

@@ -13,11 +13,16 @@ class Station {
   #timeout = null;
   tags = {};
   playlist = [];
+  timestamp = null;
 
   constructor({id, name, playlist}) {
     this.id = id;
     this.name = name;
     this.#playlistURL = playlist;
+
+    event.on(`${this.id}.connect`, () => {
+      console.log(`[${this.id}] Connected to ${this.#endpoint}`);
+    });
   }
 
   onTagUpdate(callback) {
@@ -102,7 +107,9 @@ class Station {
           this.reconnect(30e3, e);
         });
         icecast.on('pipe', () => {
-          console.log(`[${this.id}] Connected to ${this.#endpoint}`);
+          this.timestamp = Station.now();
+          event.emit('connect', this.id);
+          event.emit(`${this.id}.connect`);
         })
         response.on('close', () => {
           this.reconnect(5e3, "Connection was closed");
@@ -124,7 +131,8 @@ class Station {
 
   reconnect(ms = 30e3, e) {
     clearTimeout(this.#timeout);
-    e && console.error(e);
+    this.timestamp = null;
+    e && console.error(`[${this.id}]`, e);
     if (!Object.keys(this.tags).length) {
       console.log(`[${this.id}] Reconnect is not needed: no tags were fetched. (${this.#endpoint})`);
       return false;
