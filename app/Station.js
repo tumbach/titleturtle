@@ -43,8 +43,8 @@ class Station {
 
   setTags(tags) {
     this.tags = {
-      artist: tags.artist || null,
-      title: tags.title || null,
+      artist: tags?.artist.trim() || null,
+      title: tags?.title.trim() || null,
       date: tags.date ?? Station.now(),
     };
     event.emit(`${this.id}.update`, this.getTags(false));
