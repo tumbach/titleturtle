@@ -1,4 +1,4 @@
-module.exports = (stations, timestamp, now) => {
+export default (stations, timestamp, now) => {
   return (command, message, ws, err) => {
     let stationId = message.toLowerCase();
     if (!stationId) {
@@ -14,7 +14,7 @@ module.exports = (stations, timestamp, now) => {
     let uptime = getStationUptime(station, now);
     return sendUptime(uptime, stationId, ws);
   };
-};
+}
 
 function getGlobalUptime(timestamp, now) {
   return now() - timestamp;

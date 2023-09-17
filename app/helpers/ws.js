@@ -1,12 +1,13 @@
-const WebSocket = require('ws');
-const event = require('./event.js');
+import { WebSocket, WebSocketServer } from "ws";
+import event from "./event.js";
+import { randomInt } from "node:crypto";
 
 let instance;
 
 class WS {
   constructor ({server, port}) {
     this.handlers = [];
-    this.instance = new WebSocket.Server({
+    this.instance = new WebSocketServer({
       server,
       port,
       path: '/ws'
@@ -14,7 +15,7 @@ class WS {
 
     this.instance.on('connection', ws => {
       ws.isAlive = true;
-      ws.id = (Math.floor(Math.random() * 0xFFFFFF)).toString(16).toUpperCase();
+      ws.id = randomInt(0, 0xFFFFFF).toString(16).toUpperCase();
 
       //event.emit('stats.online', ws.id);
 
@@ -22,7 +23,7 @@ class WS {
         ws.isAlive = true;
       });
       ws.on('message', message => {
-        this.onMessage(message, ws);
+        this.onMessage(message.toString(), ws);
       });
       ws.on('close', () => {
         event.emit('stats.offline', ws.id);
@@ -98,7 +99,7 @@ class WS {
   }
 }
 
-module.exports = (server, port) => {
+export default (server, port) => {
   if (!instance) {
     instance = new WS({
       server,
@@ -106,4 +107,4 @@ module.exports = (server, port) => {
     });
   }
   return instance;
-};
+}

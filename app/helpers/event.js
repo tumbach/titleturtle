@@ -1,3 +1,3 @@
-const Events = require('events');
+import Events from "events";
 
-module.exports = new Events.EventEmitter();
+export default new Events.EventEmitter();

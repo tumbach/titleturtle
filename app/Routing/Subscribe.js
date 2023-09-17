@@ -1,4 +1,4 @@
-module.exports = stations => {
+export default stations => {
   return (command, message, ws, err) => {
     let stationId = message.toLowerCase();
     let station = stations.filter(s => s.id === stationId)[0];
@@ -22,4 +22,4 @@ module.exports = stations => {
     };
     ws.send(JSON.stringify(tags));
   };
-};
+}

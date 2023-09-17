@@ -1,4 +1,4 @@
-module.exports = (command, message, ws, err) => {
+export default (command, message, ws, err) => {
   message = message.toLowerCase();
   ws.type.delete(message);
   //Stats.remove(ws.id, message);
@@ -8,4 +8,4 @@ module.exports = (command, message, ws, err) => {
     [message]: null
   };
   ws.send(JSON.stringify(tags));
-};
+}

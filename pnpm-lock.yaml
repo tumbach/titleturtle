@@ -1,0 +1,66 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  html-entities:
+    specifier: ^2.4.0
+    version: 2.4.0
+  icecast-metadata-js:
+    specifier: ^1.2.7
+    version: 1.2.7
+  noop-stream:
+    specifier: ^1.0.0
+    version: 1.0.0
+  ssl-root-cas:
+    specifier: ^1.3.1
+    version: 1.3.1
+  ws:
+    specifier: ^8.14.1
+    version: 8.14.1
+
+packages:
+
+  /@coolaj86/urequest@1.3.7:
+    resolution: {integrity: sha512-PPrVYra9aWvZjSCKl/x1pJ9ZpXda1652oJrPBYy5rQumJJMkmTBN3ux+sK2xAUwVvv2wnewDlaQaHLxLwSHnIA==}
+    dev: false
+
+  /codec-parser@2.4.3:
+    resolution: {integrity: sha512-3dAvFtdpxn4YLstqsB2ZiJXXNg7n1j7R5ONeDuk+2kBkb39PwrCRytOFHlSWA8q5jCjW3PumeMv9q37bFHsijg==}
+    dev: false
+
+  /html-entities@2.4.0:
+    resolution: {integrity: sha512-igBTJcNNNhvZFRtm8uA6xMY6xYleeDwn3PeBCkDz7tHttv4F2hsDI2aPgNERWzvRcNYHNT3ymRaQzllmXj4YsQ==}
+    dev: false
+
+  /icecast-metadata-js@1.2.7:
+    resolution: {integrity: sha512-ez7FTATej/YDo7va1CGK9EC2acDCiv6Hv1Ab79YsAuwBSgN15Wtid8PPKii84iDSPigcfvL57U0SEuSEk19dRA==}
+    dependencies:
+      codec-parser: 2.4.3
+    dev: false
+
+  /noop-stream@1.0.0:
+    resolution: {integrity: sha512-EHpIatM09Pg7dZOsowDwqqdacYpogTBb1BNSMIy8g/J+MGpaxy0k+qmrbYrjLNRPXtW3fqf+Q3b2Q0yFRnQdIw==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dev: false
+
+  /ssl-root-cas@1.3.1:
+    resolution: {integrity: sha512-KR8J210Wfvjh+iNE9jcQEgbG0VG2713PHreItx6aNCPnkFO8XChz1cJ4iuCGeBj0+8wukLmgHgJqX+O5kRjPkQ==}
+    dependencies:
+      '@coolaj86/urequest': 1.3.7
+    dev: false
+
+  /ws@8.14.1:
+    resolution: {integrity: sha512-4OOseMUq8AzRBI/7SLMUwO+FEDnguetSk7KMb1sHwvF2w2Wv5Hoj0nlifx8vtGsftE/jWHojPy8sMMzYLJ2G/A==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+    dev: false

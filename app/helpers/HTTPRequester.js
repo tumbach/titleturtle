@@ -1,8 +1,8 @@
-const http = require('http');
-const https = require('https');
-const packageJSON = require('../../package.json');
+import http from "node:http";
+import https from "node:https";
+import packageJSON from "../../package.json" assert { type: "json" };
 
-class HTTPRequester {
+export default class HTTPRequester {
 
     #url;
     #options;
@@ -102,5 +102,3 @@ class HTTPRequester {
     }
 
 }
-
-module.exports = HTTPRequester;

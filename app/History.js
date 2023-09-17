@@ -1,4 +1,4 @@
-module.exports = class History {
+export default class History {
 
   constructor(length, ttl) {
     this.history = [];
@@ -39,4 +39,4 @@ module.exports = class History {
     return Math.floor(new Date() / 1e3);
   }
 
-};
+}

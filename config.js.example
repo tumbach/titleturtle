@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   server: {
     websocket: {
       enable: true,
@@ -14,7 +14,7 @@ module.exports = {
     {
       id: 'sovietwave',
       name: 'Советская волна',
-      playlist: 'https://sovietwave.su/listen.m3u'
+      playlist: 'https://sovietwave.su/sovietwave.m3u'
     },
     {
       id: 'tumbach',
@@ -22,14 +22,6 @@ module.exports = {
       playlist: 'https://radio.tumbach.one/static/playlist.m3u',
       historyLength: 50,
       historyTtl: 0
-    },
-    {
-      id: 'nyan',
-      name: 'J-Trance channel on WaveRadio',
-      playlist: [
-        'https://station.waveradio.org/nyan',
-        'https://station.waveradio.org/nyan.mp3'
-      ]
     },
     {
       id: 'witch',
@@ -44,22 +36,10 @@ module.exports = {
       playlist: 'https://plaza.one/plaza.m3u'
     },
     {
-      id: 'lainon',
-      name: 'lainon.life (cyberia)',
-      playlist: 'https://lainon.life/radio/cyberia.mp3.m3u'
-    },
-    /*{
       id: 'anonfm',
       name: 'Radio Anonymous',
       playlist: [
         'https://anon.fm/streams/radio.aac'
-      ]
-    },*/
-    {
-      id: "anonfmbeta",
-      name: "Radio Anonymous (beta)",
-      playlist: [
-        'http://beta.anon.fm:8000/music.mp3'
       ]
     }
   ],

@@ -1,11 +1,13 @@
-const { IcecastMetadataStream } = require("icecast-metadata-js");
-const { writableNoopStream: devNull } = require('noop-stream');
-const { decode } = require('html-entities');
+import {IcecastMetadataStream} from "icecast-metadata-js";
+import {writableNoopStream as devNull} from "noop-stream";
+import {decode} from "html-entities";
 
-const event = require('./helpers/event.js');
-const HTTPRequester = require('./helpers/HTTPRequester.js');
+import event from "./helpers/event.js";
+import HTTPRequester from "./helpers/HTTPRequester.js";
 
-class Station {
+export default class Station {
+
+  static SEPARATOR = ' - ';
 
   #endpoint;
   #playlistURL;
@@ -116,7 +118,7 @@ class Station {
         });
         response.pipe(icecast);
         icecast.stream.pipe(devNull());
-        icecast.metadata.pipe(devNull({ objectMode: true }));
+        icecast.metadata.pipe(devNull({objectMode: true}));
       });
       stream.on('timeout', e => {
         this.reconnect(10e3, e);
@@ -181,21 +183,19 @@ class Station {
     }
 
     if (metadata.StreamTitle) {
-      let [ artist, title ] = metadata.StreamTitle.split(' - ');
+      let [artist, ...title] = metadata.StreamTitle.split(Station.SEPARATOR);
       tags.artist = artist;
-      tags.title = title;
+      tags.title = title.join(Station.SEPARATOR);
     }
 
-    tags.artist = decode(tags.artist, {scope: 'strict'});
-    tags.title =  decode(tags.title,  {scope: 'strict'});
-
-    return tags;
+    return {
+      artist: decode(tags.artist, {scope: 'strict'}),
+      title: decode(tags.title, {scope: 'strict'}),
+    }
   }
 
   static now() {
     return Math.floor(+new Date() / 1e3);
   }
 
-}
-
-module.exports = Station;
+};
